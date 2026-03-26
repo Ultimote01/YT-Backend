@@ -63,7 +63,7 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Specify allowed methods
   allowedHeaders: ['Content-Type', 'Authorization',"X-CSRF-Token"], // Specify allowed headers
-  credentials: false // If  cookies or sessions
+  credentials: true // If  cookies or sessions
 }));
 
 // Handle OPTIONS requests explicitly if needed (browsers send these as preflights)

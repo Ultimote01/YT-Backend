@@ -5,7 +5,7 @@ const app = require("./src/app");
 
 dotenv.config({"path": `${__dirname}/config.env`});
 
-
+ 
 const db = process.env.MONGO_URI.replace("<db_password>", process.env.DB_PASSWORD);
 
 

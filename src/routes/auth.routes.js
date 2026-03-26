@@ -48,7 +48,7 @@ const jwtToken = id => {
 const sendToken = (user, statusCode, res) => {
    const token = jwtToken(user.id);   
 
-  if (process.env.NODE_ENV === "prod") cookieOptions.secure = true;
+  // if (process.env.NODE_ENV === "prod") cookieOptions.secure = true;
   user.active = undefined;
   user.password = undefined; 
  

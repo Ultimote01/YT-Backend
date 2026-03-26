@@ -9,6 +9,7 @@ const hpp = require("hpp");
 const authRoutes = require("./routes/auth.routes");
 const twofaRoutes = require("./routes/twofa.routes");
 const errorController = require("./utils/errorController");
+const AppError = require("./utils/appError");
 
 const app = express();
 
@@ -57,7 +58,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+      return callback(new AppError(msg, 401), false);
     }
     return callback(null, true);
   },

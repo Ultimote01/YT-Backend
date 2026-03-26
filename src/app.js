@@ -36,18 +36,38 @@ const rateLimiter = rateLimit({
 });
 app.use("/api", rateLimiter);
 
+// app.use(cors({
+//   origin: "https://yt-banking-app-cgao.vercel.app/",
+//   credentials: true,
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: [
+//     "Content-Type",
+//     "Authorization",
+//     "X-CSRF-Token"
+//   ]
+// }));
+
+// app.options("*", cors());
+
+const allowedOrigins = ['https://yt-banking-app-cgao.vercel.app', 'http://localhost:3000']; // Add your local and Vercel domains
+
 app.use(cors({
-  origin: "https://yt-banking-app-cgao.vercel.app/",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-CSRF-Token"
-  ]
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Specify allowed methods
+  allowedHeaders: ['Content-Type', 'Authorization',"X-CSRF-Token"], // Specify allowed headers
+  credentials: false // If  cookies or sessions
 }));
 
-app.options("*", cors());
+// Handle OPTIONS requests explicitly if needed (browsers send these as preflights)
+app.options('*', cors());
 
 
 app.use(express.json());

@@ -37,7 +37,7 @@ const rateLimiter = rateLimit({
 app.use("/api", rateLimiter);
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "https://yt-banking-app-cgao.vercel.app/",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
@@ -50,12 +50,6 @@ app.use(cors({
 app.options("*", cors());
 
 
-// app.use((req, res, next)=>{
-//     res.setHeader("Access-Control-Allow-Origin", "*");
-//     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-//     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
-//     next();
-// })
 app.use(express.json());
 
 app.use((req, res, next)=> {

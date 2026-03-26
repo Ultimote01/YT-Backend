@@ -67,7 +67,7 @@ app.use((req, res, next)=> {
 app.use("/auth", authRoutes);
 app.use("/2fa", twofaRoutes);
 
-app.use("*", (req, res, next)=> {
+app.all("*", (req, res, next)=> {
    res.status(404).json({
     error: "Error found"
    })

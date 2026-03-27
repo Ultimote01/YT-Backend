@@ -14,31 +14,20 @@ module.exports = class Email {
   }
 
   newTransport() {
-    if (process.env.NODE_ENV === "prod") {
-      // 🚀  Real emails
-      return nodeMailer.createTransport({
-        host: "smtp.sendgrid.net",
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.SMTP_USERNAME,
-          pass: process.env.SMTP_PASSWORD,
-        },
-      });
-    }
-  
     // 🧪  Captured by Mailcatcher
     return nodeMailer.createTransport({
-    host: "127.0.0.1",  // Mailcatcher SMTP
-    port: 62183,
+    host: "https://mailcatcher-7ux7.onrender.com",  // Mailcatcher SMTP
+    port: 1080,
     secure: false,      // Mailcatcher does not use SSL
     auth: null,         // no username or password
     tls: {
       rejectUnauthorized: false
     }
-    });
+    });  
   }
-   
+
+ 
+  
   // Send the actual email
   async send(template, subject) {
     const path = __dirname.replace("/utils", "/data/emailTemplate.html");

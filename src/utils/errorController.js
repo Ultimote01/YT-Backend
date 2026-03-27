@@ -27,7 +27,7 @@ const handleJWTExpiredError = () => {
 
 const sendErrorDev = (req, res, err) => {
   // A) Chceck  if  url  is api route
-  if (req.originalUrl.startsWith("/api")) {
+  if (req.originalUrl?.startsWith("/api")) {
     return res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
@@ -54,13 +54,14 @@ const sendErrorDev = (req, res, err) => {
 const sendErrorProd = (req, res, err) => {
 
   // B) Chceck  if  url  is api route
-  if (req.originalUrl.startsWith("/api")) {
+  if (req.originalUrl?.startsWith("/api")) {
     if (err.isOperational) {
       return res.status(err.statusCode).json({
         status: err.status,
         message: err.message
       });
     }
+
     // If not operational
     return res.status(500).json({
       status: "error",
@@ -68,17 +69,12 @@ const sendErrorProd = (req, res, err) => {
     });
   }
 
-  if (err.isOperational) {
-    return res.status(err.statusCode).render("error", {
-      title: "Something went wrong ",
-      msg: err.message
-    });
-  }
-  // If not operational
-  return res.status(500).render("error", {
+  return res.status(err.statusCode)
+    .json( {
     title: "Something went wrong ",
-    msg: "Something went wrong, try agin later"
+    message: err.message 
   });
+
 };
 
 function handleErrorType(error, req, res, env) {
@@ -93,7 +89,7 @@ function handleErrorType(error, req, res, env) {
       }
   else if (error.name === "ValidationError"){
       error=handleValidationErrorDB(error);
-     
+      
     }
     
   else if (error.name ===  "JsonWebTokenError"){
@@ -106,8 +102,10 @@ function handleErrorType(error, req, res, env) {
     }
 
    if (env === "dev"){
+  
           sendErrorDev(req,res,error);
     }else {
+           
           sendErrorProd(req,res,error);
         }
     }
@@ -116,7 +114,7 @@ function handleErrorType(error, req, res, env) {
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
-  console.log(err)
+  console.log(err.code)
   
 
   if (process.env.NODE_ENV === "dev") {
@@ -132,7 +130,7 @@ module.exports = (err, req, res, next) => {
   } else if (process.env.NODE_ENV === "prod") {
     let error = { ...err };
     error.message = err.message;
-    handleErrorType(err, error, req, res, "prod");
+    handleErrorType(err, req, res, "prod");
      
    
    

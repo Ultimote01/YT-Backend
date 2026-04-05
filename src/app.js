@@ -37,7 +37,7 @@ const rateLimiter = rateLimit({
 });
 app.use("/api", rateLimiter);
 
-const allowedOrigins = ['https://yt-banking-app-cgao.vercel.app', 'http://localhost:3000']; // Add your local and Vercel domains
+const allowedOrigins = ['https://yt-banking-app-cgao.vercel.app', 'http://localhost:5173']; // Add your local and Vercel domains
 
 app.use(cors({
   origin: function (origin, callback) {

@@ -232,10 +232,11 @@ router.get("/resend-email", isLoggedIn,  catchAsync( async (req, res, next)=> {
 
 
 router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
-  console.log("Yello")
-
+  
+  console.log(req.body)
+    
   if (req.body?.preferredAuthMethod){
-
+    
      if (req.body?.preferredAuthMethod === "none"){
       Object.keys(res.locals.user.twoFAMethods).forEach((key)=> {
         res.locals.user.twoFAMethods[key].preferred = false;
@@ -244,30 +245,51 @@ router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
         res.locals.user=undefined;
       })
 
-      return res.json(204);
-     } 
-
-     Object.keys(res.locals.user.twoFAMethods).forEach((key)=>{
-      if (res.locals.user.twoFAMethods[key].name === req.body?.preferredAuthMethod ) {
-        res.locals.user.twoFAMethods[key].preferred = true;
-        res.locals.user.twoFAEnabled =true;
-        res.locals.user.save();
-        res.locals.user= undefined;
-      }
+     }else{
+        Object.keys(res.locals.user.twoFAMethods).forEach((key)=>{
+        if (res.locals.user.twoFAMethods[key].name === req.body?.preferredAuthMethod ) {
+          res.locals.user.twoFAMethods[key].preferred = true;
+          res.locals.user.twoFAEnabled =true;
+          res.locals.user.save();
+          res.locals.user= undefined;
+        }
      })
+     }
+   
+  
+      
 
-
-
-     return res.json(204);
   }
 
+   
+      if (req.body?.twoFAMethods) {
+
+      for (let userMethod of req.body.twoFAMethods) {
+        const twoFACreated = res.locals.user.twoFAMethods.some((method)=> {
+        if (userMethod.name === method?.name)
+        return true; return false; })
+
+        if (!twoFACreated){
+          res.locals.user.twoFAMethods.push({
+            name: userMethod.name
+          })
+          res.locals.user.twoFAEnabled = true;
+        } 
+
+      }
+        
+    
+
+      await res.locals.user.save();
+      res.locals.user=undefined;
+    }
+
+   return res.json(204);
 }))
 
 
 module.exports = router;
 module.exports.setNotifications = setNotifications;
 module.exports.sendToken = sendToken;
-module.exports.changeTime = ()=> {
-  console.log("time")
-}
+module.exports.isLoggedIn =isLoggedIn;
  

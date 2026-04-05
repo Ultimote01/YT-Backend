@@ -6,11 +6,16 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/user");
 const auth = require("../middleware/auth.middleware");
-const { setNotifications , sendToken ,changeTime} = require("../routes/auth.routes");
+const { setNotifications , sendToken , isLoggedIn} = require("../routes/auth.routes");
 const catchAsync = require("../utils/catchAsync");
 
 
 const router = express.Router();
+
+let reverseOtpStatus = "Invalid"; 
+let reverseotpSessionId = "";
+
+const reverseotpMap = new Map();
 
 router.post("/setup", auth, catchAsync(async (req, res) => {
   const user = await User.findById(req.user.id);
@@ -51,7 +56,7 @@ router.post("/verify", auth, catchAsync( async (req, res) => {
 
   if (!verified) return res.status(400).json({ error: "Invalid token" });
 
-  user.twoFAEnabled = true;
+  
 
   const twoFACreated = user.twoFAMethods.some((method)=> {
     if (req.body?.method === method?.name)
@@ -61,6 +66,7 @@ router.post("/verify", auth, catchAsync( async (req, res) => {
      user.twoFAMethods.push({
       name: req.body?.method,
     })
+     user.twoFAEnabled = true;
   } 
 
   await user.save();
@@ -114,4 +120,100 @@ sendToken(user, 200, res);
 )
 );
 
+
+router.post("/send-otp",  isLoggedIn ,catchAsync(async (req, res) => {
+//    
+   const { phone, countryCode} = req.body;
+  
+   const response = await fetch("https://app.reverseotp.com/api/v1/create_otp_session", {
+      method: "POST",
+      headers: {
+         "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+         mobile_no: phone,
+         country_code: countryCode,
+         api_key: process.env.API_KEY,
+         secret: process.env.SECRET,
+         user_name: res.locals.user.firstName
+      })
+   });
+
+   const resData = await response.json();
+
+   reverseotpMap.set(
+    res.locals.user.email, {
+      reverseOtpStatus : resData.status,
+      message: resData?.msg,
+      reverseotpSessionId : resData.data?.otp_session_id
+    }
+   )
+   res.locals.user=undefined;
+    
+    
+  
+
+   res.status(200).json({
+    status: resData.status,
+    qrCode: resData.data?.secondary?.qr,
+    intent: resData.data?.secondary?.intent
+   });
+}));
+
+router.get("/session-status", isLoggedIn, catchAsync( async(req, res)=> {
+
+
+    const reverseotpMapValue = reverseotpMap.get(res.locals.user.email);
+  
+    if (!["verified", "error","Invalid"].includes(reverseotpMapValue.reverseOtpStatus)){
+ 
+      const response = await fetch("https://app.reverseotp.com/api/v1/check_otp_session",
+       {method: "post",
+       headers: { 
+         "Content-Type": "application/json"
+      },
+       body: JSON.stringify({
+        api_key: process.env.API_KEY,
+        secret: process.env.SECRET,
+        otp_session_id: reverseotpMapValue.reverseotpSessionId
+       })
+       }
+      )
+      const resData = await response.json()
+    
+   
+      if (resData?.data) reverseotpMapValue.reverseOtpStatus = resData.data.status;
+      if (resData?.status !== "success"){
+        reverseotpMapValue.message = resData?.message;
+       reverseotpMapValue.reverseOtpStatus = resData.status;
+      }
+       
+      return res.status(200).json({
+        status: reverseotpMapValue.reverseOtpStatus,
+        message:reverseotpMapValue.message
+      })
+    }
+
+    
+    res.status(200).json({
+      status: reverseotpMapValue.reverseOtpStatus,
+      message: reverseotpMapValue.message
+    })
+}
+
+))
+
+
+router.post("/webhook/reverseotp",  (req, res) => {
+
+   const signature = req.headers["x-reverseotp-signature"];
+
+   if (signature !== process.env.WEBHOOK_SECRET) {
+       return res.status(401).send("Unauthorized");
+   }
+
+   console.log("OTP verified: ",req.body);
+});
+
 module.exports = router;
+

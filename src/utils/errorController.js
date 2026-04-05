@@ -114,7 +114,7 @@ function handleErrorType(error, req, res, env) {
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
-  console.log(err.code)
+  console.log(err)
   
 
   if (process.env.NODE_ENV === "dev") {

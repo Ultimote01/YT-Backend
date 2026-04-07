@@ -91,7 +91,6 @@ const isLoggedIn = catchAsync(async (req, res, next) => {
       return next();
     }
   } catch (err) {
-    console.log(err)
     return next();
   }
   
@@ -146,21 +145,33 @@ router.post("/login",   catchAsync( async (req, res) => {
     message: "Please provide a valid email & passsword"
   });
 
-  if (user.twoFAEnabled) {
-    const tempToken = jwt.sign(
-      { id: user._id, twoFA: true },
-      process.env.JWT_SECRET, 
-      { expiresIn: "5m" }
-    );
+  if (user.twoFAEnabled ) {
 
     const preferred2FA = user.twoFAMethods.find((method)=> {
         if (method?.preferred) return true;
         return false;
     })
 
+
+    if (preferred2FA?.name === " Google Authenticator"){
+    const tempToken = jwt.sign(
+      { id: user._id, twoFA: true },
+      process.env.JWT_SECRET, 
+      { expiresIn: "5m" }
+    );
     return res.status(200).json({ requires2FA: true, tempToken,
-      method:preferred2FA?.name?? user.twoFAMethods[0].name
+      method:preferred2FA?.name?? ""
       });
+    } else if (preferred2FA?.name === "WhatsApp") {
+      return res.status(200).json(
+      { requires2FA: true,
+      waMethodObject: preferred2FA,
+      method:preferred2FA?.name?? ""
+      });
+    }
+
+
+
   }
 
   
@@ -232,9 +243,7 @@ router.get("/resend-email", isLoggedIn,  catchAsync( async (req, res, next)=> {
 
 
 router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
-  
-  console.log(req.body)
-    
+ 
   if (req.body?.preferredAuthMethod){
     
      if (req.body?.preferredAuthMethod === "none"){
@@ -263,7 +272,6 @@ router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
 
    
       if (req.body?.twoFAMethods) {
-
       for (let userMethod of req.body.twoFAMethods) {
         const twoFACreated = res.locals.user.twoFAMethods.some((method)=> {
         if (userMethod.name === method?.name)
@@ -271,9 +279,12 @@ router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
 
         if (!twoFACreated){
           res.locals.user.twoFAMethods.push({
-            name: userMethod.name
+            name: userMethod.name,
+            preferred: false,
+            country_code: userMethod.country_code,
+            mobile_no: userMethod.mobile_no
+
           })
-          res.locals.user.twoFAEnabled = true;
         } 
 
       }

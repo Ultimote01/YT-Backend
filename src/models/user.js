@@ -2,11 +2,14 @@ const mongoose = require("mongoose");
 
 const twoFAMethod = new mongoose.Schema({
   name:String,
+  country_code: String,
+  mobile_no: String,
   preferred:{
     type: Boolean,
     default: false
-  }
+  },
 })
+
 
 const notification = new mongoose.Schema({
   name: String,

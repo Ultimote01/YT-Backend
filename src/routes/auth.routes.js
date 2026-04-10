@@ -45,7 +45,7 @@ const jwtToken = id => {
 
 
 
-const sendToken = (user, statusCode, res) => {
+const sendToken = (user, statusCode, res, otpStatus) => {
    const token = jwtToken(user.id);   
 
   // if (process.env.NODE_ENV === "prod") cookieOptions.secure = true;
@@ -54,7 +54,7 @@ const sendToken = (user, statusCode, res) => {
  
   // res.cookie("jwt", token, cookieOptions);
   res.status(statusCode).json({
-    status: statusCode,
+    status: otpStatus?? statusCode,
     token,
       user
   });
@@ -66,8 +66,6 @@ const sendToken = (user, statusCode, res) => {
 const isLoggedIn = catchAsync(async (req, res, next) => {
     
   const token =  req.headers.authorization?.split(" ")[1]?? "";
- 
- 
   try {
     // Check if the users are authenticated
     if (token) {
@@ -78,12 +76,13 @@ const isLoggedIn = catchAsync(async (req, res, next) => {
         process.env.JWT_SECRET
       );
 
+
       
       // 3) Check if the user still exist
       const currentUser = await User.findById(decoded.id);
       if (!currentUser) {
         return next();
-      }
+      } 
        
   
       // 4) Grant access to route
@@ -152,8 +151,10 @@ router.post("/login",   catchAsync( async (req, res) => {
         return false;
     })
 
-
-    if (preferred2FA?.name === " Google Authenticator"){
+     
+  console.log(preferred2FA.name);
+    if (preferred2FA?.name === "Google Authenticator"){
+     
     const tempToken = jwt.sign(
       { id: user._id, twoFA: true },
       process.env.JWT_SECRET, 
@@ -168,7 +169,7 @@ router.post("/login",   catchAsync( async (req, res) => {
       waMethodObject: preferred2FA,
       method:preferred2FA?.name?? ""
       });
-    }
+    }  
 
 
 
@@ -179,7 +180,6 @@ router.post("/login",   catchAsync( async (req, res) => {
   user.id = undefined;
    
   setNotifications(user)
-
   sendToken(user, 200, res);
 }
 )
@@ -243,29 +243,28 @@ router.get("/resend-email", isLoggedIn,  catchAsync( async (req, res, next)=> {
 
 
 router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
+   
  
   if (req.body?.preferredAuthMethod){
     
      if (req.body?.preferredAuthMethod === "none"){
       Object.keys(res.locals.user.twoFAMethods).forEach((key)=> {
         res.locals.user.twoFAMethods[key].preferred = false;
+        console.log(res.locals.user.twoFAMethods[key]);
         res.locals.user.twoFAEnabled =false;
-        res.locals.user.save();
-        res.locals.user=undefined;
       })
-
+      
      }else{
         Object.keys(res.locals.user.twoFAMethods).forEach((key)=>{
+          res.locals.user.twoFAMethods[key].preferred = false;
         if (res.locals.user.twoFAMethods[key].name === req.body?.preferredAuthMethod ) {
           res.locals.user.twoFAMethods[key].preferred = true;
           res.locals.user.twoFAEnabled =true;
-          res.locals.user.save();
-          res.locals.user= undefined;
         }
      })
+  
      }
    
-  
       
 
   }
@@ -289,11 +288,10 @@ router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
 
       }
         
-    
-
-      await res.locals.user.save();
-      res.locals.user=undefined;
     }
+
+    await res.locals.user.save();
+    res.locals.user=undefined;
 
    return res.json(204);
 }))

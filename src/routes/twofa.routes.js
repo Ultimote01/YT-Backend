@@ -115,8 +115,12 @@ sendToken(user, 200, res);
 )
 );
 
+
+
 const sendOtp = catchAsync(async (req, res) => {   
    const { mobile_no, country_code, user_name} = req.body;
+
+   
   
    const response = await fetch("https://app.reverseotp.com/api/v1/create_otp_session", {
       method: "POST",
@@ -128,7 +132,7 @@ const sendOtp = catchAsync(async (req, res) => {
          country_code: country_code,
          api_key: process.env.API_KEY,
          secret: process.env.SECRET,
-         user_name: res.locals?.user?.firstName?? user_name
+         user_name: res.locals?.user?.email?? user_name
       })
    });
 
@@ -168,16 +172,15 @@ const checkSessionStatus = catchAsync( async(req, res)=> {
         const user = await User.findOne({email: req.body.email});
       
 
-        return res.status(200).json({
-        status: resData.data?.status?? resData?.status,
-        user
-      })
-
+        setNotifications(user);
+        sendToken(user,200,res,  resData.data?.status?? resData?.status);
+    
       }
 
   
       res.locals.user = undefined;
 
+      
       return res.status(200).json({
         status: resData.data?.status?? resData?.status,
         message:resData?.message
@@ -195,13 +198,16 @@ router.post("/session-status-auth", checkSessionStatus);
 
 
 
-router.post("/webhook/reverseotp",  (req, res) => {
+router.post("/webhook/reverseotp",  async (req, res) => {
 
    const signature = req.headers["x-reverseotp-signature"];
 
    if (signature !== process.env.WEBHOOK_SECRET) {
        return res.status(401).send("Unauthorized");
    }
+   console.log(req.body)
+  //  const decoded = await promisify()
+
 });
 
 module.exports = router;

@@ -50,7 +50,22 @@ router.post("/verify", auth, catchAsync( async (req, res) => {
     window: 1
   });
 
-  if (!verified) return res.status(400).json({ error: "Invalid token" });
+  if (!verified){ 
+
+    user.twoFAMethods.forEach((method)=>{
+
+      if ( req.body?.method === method?.name){
+        if (method.preferred === true) user.twoFAEnabled= false;
+      }
+    })
+
+     user.twoFAMethods= user.twoFAMethods.filter((method)=>
+      req.body?.method !== method?.name
+     )
+     console.log()
+     user.save();
+    return res.status(200).json({ message: "Invalid token" });
+  }
 
   
 
@@ -120,8 +135,6 @@ sendToken(user, 200, res);
 const sendOtp = catchAsync(async (req, res) => {   
    const { mobile_no, country_code, user_name} = req.body;
 
-   
-  
    const response = await fetch("https://app.reverseotp.com/api/v1/create_otp_session", {
       method: "POST",
       headers: {
@@ -132,7 +145,7 @@ const sendOtp = catchAsync(async (req, res) => {
          country_code: country_code,
          api_key: process.env.API_KEY,
          secret: process.env.SECRET,
-         user_name: res.locals?.user?.email?? user_name
+         user_name: res.locals?.user.firstName?? user_name
       })
    });
 
@@ -206,7 +219,6 @@ router.post("/webhook/reverseotp",  async (req, res) => {
        return res.status(401).send("Unauthorized");
    }
    console.log(req.body)
-  //  const decoded = await promisify()
 
 });
 

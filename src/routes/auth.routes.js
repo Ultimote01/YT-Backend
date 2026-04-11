@@ -248,14 +248,14 @@ router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
   if (req.body?.preferredAuthMethod){
     
      if (req.body?.preferredAuthMethod === "none"){
-      Object.keys(res.locals.user.twoFAMethods).forEach((key)=> {
+      res.locals.user.twoFAMethods.forEach((key)=> {
         res.locals.user.twoFAMethods[key].preferred = false;
         console.log(res.locals.user.twoFAMethods[key]);
         res.locals.user.twoFAEnabled =false;
       })
       
      }else{
-        Object.keys(res.locals.user.twoFAMethods).forEach((key)=>{
+        res.locals.user.twoFAMethods.forEach((key)=>{
           res.locals.user.twoFAMethods[key].preferred = false;
         if (res.locals.user.twoFAMethods[key].name === req.body?.preferredAuthMethod ) {
           res.locals.user.twoFAMethods[key].preferred = true;

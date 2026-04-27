@@ -145,13 +145,13 @@ const sendOtp = catchAsync(async (req, res) => {
          country_code: country_code,
          api_key: process.env.API_KEY,
          secret: process.env.SECRET,
-         user_name: res.locals?.user.firstName?? user_name
+         user_name: res.locals?.user?.firstName?? user_name
       })
    });
 
    const resData = await response.json();
 
-  
+ 
    res.locals.user=undefined;
    res.status(200).json({
     status: resData.status,

@@ -285,7 +285,7 @@ router.post("/logout", isLoggedIn, catchAsync( async (req, res, next )=> {
 
           })
         } 
-
+ 
       }
         
     }

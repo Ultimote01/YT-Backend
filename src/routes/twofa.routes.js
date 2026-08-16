@@ -144,19 +144,19 @@ const sendOtp = catchAsync(async (req, res) => {
          mobile_no: mobile_no,
          country_code: country_code,
          api_key: process.env.API_KEY,
-         secret: process.env.SECRET,
+         secret: process.env.REVERSE_OTP_SECRET,
          user_name: res.locals?.user?.firstName?? user_name
       })
    });
 
    const resData = await response.json();
 
-   console.log(resData);
+  //  console.log(resData);
    res.locals.user=undefined;
    res.status(200).json({
     status: resData.status,
-    qrCode: resData.data?.secondary?.qr,
-    intent: resData.data?.secondary?.intent,
+    qrCode: resData.data?.primary?.qr,
+    intent: resData.data?.primary?.intent,
     message: resData?.msg,
    otp_session_id : resData.data?.otp_session_id
    });
@@ -172,7 +172,7 @@ const checkSessionStatus = catchAsync( async(req, res)=> {
       },
        body: JSON.stringify({
         api_key: process.env.API_KEY,
-        secret: process.env.SECRET,
+        secret: process.env.REVERSE_OTP_SECRET,
         otp_session_id: req.body.otp_session_id
        })
        }

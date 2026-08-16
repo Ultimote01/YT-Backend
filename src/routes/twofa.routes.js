@@ -151,7 +151,7 @@ const sendOtp = catchAsync(async (req, res) => {
 
    const resData = await response.json();
 
-  //  console.log(resData);
+   console.log(resData);
    res.locals.user=undefined;
    res.status(200).json({
     status: resData.status,
